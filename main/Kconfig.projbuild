@@ -1,0 +1,159 @@
+menu "Project Configuration"
+
+    menu "STA mode settings"
+        config WIFI_INFO
+            bool "Provide info about wifi"
+            default false
+            help
+                Provide ssid, password etc. It will try to connect to the access point(AP) without requiring info at startup.
+    
+        config STA_WIFI_SSID
+            string "WiFi SSID"
+            default "myssid"
+            depends on WIFI_INFO
+            help
+                SSID (network name).
+    
+        config STA_WIFI_PASSWORD
+            string "WiFi Password"
+            default "mypassword"
+            depends on WIFI_INFO
+            help
+            WiFi password (WPA or WPA2).
+
+        choice WIFI_SAE_MODE
+            prompt "WPA3 SAE mode selection"
+            default WPA3_SAE_PWE_BOTH
+            depends on WIFI_INFO
+            help
+                Select mode for SAE as Hunt and Peck, H2E or both.
+            config WPA3_SAE_PWE_HUNT_AND_PECK
+                bool "HUNT AND PECK"
+            config WPA3_SAE_PWE_HASH_TO_ELEMENT
+                bool "H2E"
+            config WPA3_SAE_PWE_BOTH
+                bool "BOTH"
+        endchoice
+    
+        config WIFI_PW_ID
+            string "PASSWORD IDENTIFIER"
+            depends on WIFI_INFO&& WPA3_SAE_PWE_HASH_TO_ELEMENT|| WPA3_SAE_PWE_BOTH
+            default ""
+            help
+                password identifier for SAE H2E
+
+        config MAXIMUM_RETRY
+            int "Maximum retry"
+            default 5
+            depends on WIFI_INFO
+            help
+                Set the Maximum retry to avoid station reconnecting to the AP unlimited when the AP is really inexistent.
+
+        choice WIFI_SCAN_AUTH_MODE_THRESHOLD
+            prompt "WiFi Scan auth mode threshold"
+            default WIFI_AUTH_WPA2_PSK
+            depends on WIFI_INFO
+            help
+                The weakest authmode to accept in the scan mode.
+                This value defaults to WIFI_AUTH_WPA2_PSK incase password is present and WIFI_AUTH_OPEN is used.
+                Please select WIFI_AUTH_WEP/WIFI_AUTH_WPA_PSK incase AP is operating in WEP/WPA mode.
+    
+            config WIFI_AUTH_OPEN
+                bool "OPEN"
+            config WIFI_AUTH_WEP
+                bool "WEP"
+            config WIFI_AUTH_WPA_PSK
+                bool "WPA PSK"
+            config WIFI_AUTH_WPA2_PSK
+                bool "WPA2 PSK"
+            config WIFI_AUTH_WPA_WPA2_PSK
+                bool "WPA/WPA2 PSK"
+            config WIFI_AUTH_WPA3_PSK
+                bool "WPA3 PSK"
+            config WIFI_AUTH_WPA2_WPA3_PSK
+                bool "WPA2/WPA3 PSK"
+            config WIFI_AUTH_WAPI_PSK
+                bool "WAPI PSK"
+        endchoice
+        
+    endmenu
+
+    menu "AP mode settings"
+        config AP_WIFI_SSID
+            string "WiFi SSID"
+            default "myssid"
+            help
+                SSID (network name) for the example to connect to.
+    
+        config AP_WIFI_PASSWORD
+            string "WiFi Password"
+            default "mypassword"
+            help
+                WiFi password (WPA or WPA2) for the example to use.
+
+        config AP_MANUAL_CHANNEL
+            bool "Manual channel selection"
+            default false
+            help
+                Disable automatic channel selection for the ESP32 access point (AP) to choose manually.
+            
+        config AP_WIFI_CHANNEL
+            int "WiFi Channel"
+            range 1 13
+            default 1
+            depends on AP_MANUAL_CHANNEL
+            help
+                WiFi channel (network channel).
+
+        config MAX_STA_CONN
+            int "Maximal STA connections"
+            default 1
+            help
+                Max number of the STA connects to AP.
+
+        config TIMEOUT_IDLE
+            int "Seconds until idle event will be triggered"
+            default 60
+            help
+                This setting determines the number of seconds of inactivity 
+                after which an idle event will be triggered when no one is connected.
+                
+    endmenu
+
+    menu "Scan settings"
+        config SCAN_LIST_SIZE
+            int "Max size of scan list"
+            range 0 20
+            default 10
+            help
+                The size of array that will be used to retrieve the list of access points.
+    endmenu
+
+    menu "MQTT settings"
+        config BROKER_URI
+            string "Broker URI"
+            default "mqtt://mqtt.eclipseprojects.io"
+            help
+                URI of the broker to connect to.
+
+        config PUBLISH_RATE
+            int "Publish rate"
+            default 30
+            help
+                Publish to the broker rate in seconds.
+    endmenu
+
+    menu "DS18B20 settings"
+        config ONEWIRE_BUS_GPIO
+            int "DS18B20 GPIO"
+            default 23
+            help
+                GPIO pin number where the DS18B20 temperature sensor is connected. Ensure it matches your hardware setup.
+        config ONEWIRE_MAX_DS18B20
+            int "Max number of DS18B20 connected to the same GPIO"
+            default  1
+            help
+                Maximum number of DS18B20 sensors connected to the same GPIO pin. Ensure it matches your hardware setup.
+    endmenu
+
+endmenu

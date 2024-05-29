@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Configuration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        div {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        div h2 {
+            margin-bottom: 10px;
+        }
+
+        form {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="number"],
+        input[type="file"],
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
+        select {
+            appearance: none;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button[disabled] {
+            background-color: #ccc;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Device Configuration</h1>
+
+    <div>
+        <h2>Init Options</h2>
+        <form action="/init/sta" method="post">
+            <h3>Initialize STA</h3>
+            <button type="submit" id="initSta">Initialize STA</button>
+        </form>
+        <form action="/init/mqtt" method="post">
+            <h3>Initialize MQTT</h3>
+            <button type="submit" id="initMqtt">Initialize MQTT</button>
+        </form>
+    </div>
+
+    <div>
+        <h2>Set Station Mode Options</h2>
+        <form id="setOptionsForm">
+            <label for="ssid">SSID:</label><br>
+            <input type="text" id="ssid" name="ssid"><br>
+            <label for="password">Password:</label><br>
+            <input type="password" id="password" name="password"><br>
+            <label for="maxRetry">Max Retry:</label><br>
+            <input type="number" id="maxRetry" name="maxRetry" value="3" min="0"><br>
+            <label for="authMode">Auth Mode:</label><br>
+            <select id="authMode" name="authMode">
+                <option value="open">Open</option>
+                <option value="wep">WEP</option>
+                <option value="wpa_psk">WPA-PSK</option>
+                <option value="wpa2_psk">WPA2-PSK</option>
+                <option value="wpa_wpa2_psk">WPA-WPA2-PSK</option>
+                <option value="wpa3_psk">WPA3-PSK</option>
+                <option value="wpa2_wpa3_psk">WPA2-WPA3-PSK</option>
+                <option value="wapi_psk">WAPI-PSK</option>
+            </select><br>
+            <label for="saeMode">SAE Mode:</label><br>
+            <select id="saeMode" name="saeMode">
+                <option value="unspecified">Unspecified</option>
+                <option value="hunt_and_peck">Hunt and Peck</option>
+                <option value="h2e">H2E</option>
+                <option value="both">Both</option>
+            </select><br>
+            <label for="passwordId">Password ID:</label><br>
+            <input type="text" id="passwordId" name="passwordId"><br><br>
+            <button id="setOptionsStaBtn" type="button">Set Options</button><br>
+        </form>
+    </div>
+
+    <div>
+        <h2>Set MQTT Options</h2>
+        <form id="setMqttOptionsForm">
+            <label for="mqttUri">MQTT URI:</label><br>
+            <input type="text" id="mqttUri" name="mqttUri"><br><br>
+
+            <button id="setOptionsMqttBtn" type="button">Set Options</button><br>
+        </form>
+    </div>
+
+    <div>
+        <h2>Restart device</h2>
+        <form action="/restart" id="restartForm" method="post">
+            <button type="submit" id="restart">Restart</button>
+        </form>
+    </div>
+    
+    <div class="upload-section">
+        <h2>Firmware Upload</h2>
+        <div>
+            <label for="firmware">Firmware file</label><br>
+            <input type="file" id="firmware" name="firmware">
+        
+            <button id="uploadBtn" type="button">Upload</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            document.getElementById("setOptionsStaBtn").addEventListener("click", setOptionsSta);
+            document.getElementById("setOptionsMqttBtn").addEventListener("click", setOptionsMqtt);
+
+            document.getElementById("restartForm").addEventListener("submit", function(event) {
+                event.preventDefault();
+                restart();
+                this.submit();
+            });
+            document.getElementById("uploadBtn").addEventListener("click", otaUpdate);
+        });
+
+        function setOptionsMqtt() {
+            var mqttUri = document.getElementById("mqttUri").value;
+            
+            var queryString = "uri=" + mqttUri;
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log("Options set successfully!");
+                }
+            };
+            xhttp.open("POST", "/set_options/mqtt?" + queryString, true);
+            xhttp.send();
+        }
+
+        function setOptionsSta() {
+            var ssid = document.getElementById("ssid").value;
+            var password = document.getElementById("password").value;
+            var maxRetry = document.getElementById("maxRetry").value;
+            var authMode = document.getElementById("authMode").value;
+            var saeMode = document.getElementById("saeMode").value;
+            var passwordId = document.getElementById("passwordId").value;
+
+            var queryString = "ssid=" + ssid +
+                "&password=" + password +
+                "&max_retry=" + maxRetry +
+                "&auth_mode=" + authMode +
+                "&sae_mode=" + saeMode +
+                "&password_id=" + passwordId;
+
+            var xhttp = new XMLHttpRequest();
+            xhttp.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    console.log("Options set successfully!");
+                }
+            };
+            xhttp.open("POST", "/set_options/sta?" + queryString, true);
+            xhttp.send();
+        }
+        
+        function restart() {
+            document.getElementById("firmware").disabled = true;
+            document.getElementById("uploadBtn").disabled = true;
+            document.getElementById("restart").disabled = true;
+            document.getElementById("setOptionsStaBtn").disabled = true;
+            document.getElementById("setOptionsMqttBtn").disabled = true;
+            document.getElementById("initSta").disabled = true;
+            document.getElementById("initMqtt").disabled = true;
+        }
+
+        function otaUpdate() {
+            const firmware = document.getElementById("firmware").files;
+
+            if (firmware.length === 0) {
+                alert("No file selected!");
+                return;
+            }
+
+            document.getElementById("firmware").disabled = true;
+            document.getElementById("uploadBtn").disabled = true;
+            document.getElementById("restart").disabled = true;
+            document.getElementById("setOptionsStaBtn").disabled = true;
+            document.getElementById("setOptionsMqttBtn").disabled = true;
+            document.getElementById("initSta").disabled = true;
+            document.getElementById("initMqtt").disabled = true;
+            
+            const file = firmware[0];
+            const xhr = new XMLHttpRequest();
+
+            xhr.open("POST", "/ota_update", true);
+            xhr.send(file);
+        }
+        
+    </script>
+</body>
+
+</html>
